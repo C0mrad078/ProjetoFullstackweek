@@ -13,76 +13,77 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model restaurant {
-  id             String         @id @default(uuid()) //id do restaurante
-  nome           String //nome do restaurante
-  slug           String //slug do restaurante
-  description    String //descrição do restaurante
-  avatarImageurl String //imagem do restaurante
-  coverImageUrl  String //imagem de capa do restaurante
-  createdAt      DateTime       @default(now()) //data de criação (data atual) coleta a data de criação
-  updatedAt      DateTime       @updatedAt //data de atualização (data atual) coleta a data de atualização
-  categories     menuCategory[]
-  products       product[]
+model Restaurant {
+  id             String         @id @default(uuid())
+  name           String
+  slug           String
+  description    String
+  avatarImageUrl String
+  coverImageUrl  String
+  menuCategories MenuCategory[]
+  products       Product[]
+  orders         Order[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 }
 
-model menuCategory {
-  id           String     @id @default(uuid()) //id da categoria
-  name         String //nome da categoria
-  restaurantId String //id do restaurante
-  restaurant   restaurant @relation(fields: [restaurantId], references: [id]) //relacionamento com o restaurante
-  createdAt    DateTime   @default(now()) //data de criação (data atual) coleta a data de criação
-  updatedAt    DateTime   @updatedAt //data de atualização (data atual) coleta a data de atualização
-  products     product[] //relaciona com a tabela de produtos
+model MenuCategory {
+  id           String     @id @default(uuid())
+  name         String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  restaurantId String
+  products     Product[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 }
 
-model product {
-  id             String         @id @default(uuid()) //id do produto
-  name           String //nome do produto
-  description    String //descrição do produto
-  price          Float //preço do produto
-  ingredients    String //ingredientes do produto
-  imageUrl       String //imagem do produto
-  restaurant     restaurant     @relation(fields: [restaurantId], references: [id]) //relacionamento com o restaurante
-  restaurantId   String //id do restaurante (puxa o id do restaurante)
-  menuCategory   menuCategory   @relation(fields: [menuCategoryId], references: [id]) //relacionamento com a categoria
-  menuCategoryId String //id da categoria (puxa o id do menu)
-  createdAt      DateTime       @default(now()) //data de criação (data atual) coleta a data de criação
-  updatedAt      DateTime       @updatedAt //data de atualização (data atual) coleta a data de atualização
-  orderproduct   Orderproduct[] //relaciona com a tabela de produtos do pedido
+model Product {
+  id             String         @id @default(uuid())
+  name           String
+  description    String
+  price          Float
+  imageUrl       String
+  ingredients    String[]
+  orderProducts  OrderProduct[]
+  restaurant     Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  restaurantId   String
+  menuCategory   MenuCategory   @relation(fields: [menuCategoryId], references: [id], onDelete: Cascade)
+  menuCategoryId String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 }
 
-model order {
-  id                Int            @id @default(autoincrement()) //id do pedido
-  total             Float //total do pedido
-  status            String //status do pedido
-  consunptionMethod String //método de consumo
-  createdAt         DateTime       @default(now()) //data de criação (data atual) coleta a data de criação
-  updatedAt         DateTime       @updatedAt //data de atualização (data atual) coleta a data de atualização
-  orderproduct      Orderproduct[] //relaciona com a tabela de produtos do pedido
+model Order {
+  id                Int               @id @default(autoincrement())
+  total             Float
+  status            OrderStatus
+  consumptionMethod ConsumptionMethod
+  restaurant        Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  restaurantId      String
+  orderProducts     OrderProduct[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 }
 
-model Orderproduct {
-  id        String   @id @default(uuid()) //id do produto do pedido
-  product   product  @relation(fields: [productId], references: [id]) //relacionamento com o produto
-  productId String //id do produto
-  order     order    @relation(fields: [orderId], references: [id]) //relacionamento com o pedido
-  orderId   Int //id do pedido
-  quantity  Int //quantidade
-  price     Float //preço
-  createdAt DateTime @default(now()) //data de criação (data atual) coleta a data de criação
-  updatedAt DateTime @updatedAt //data de atualização (data atual) coleta a data de atualização
+model OrderProduct {
+  id        String   @id @default(uuid())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   Int
+  quantity  Int
+  price     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum OrderStatus {
-  PENDING //pendente
-  CONFIRMED //confirmado
-  IN_PROGRESS //em andamento
-  DONE //feito
-  CANCELED //cancelado
+  PENDING
+  IN_PREPARATION
+  FINISHED
 }
 
 enum ConsumptionMethod {
-  takeout //levar
-  dine_in //comer no local
+  TAKEAWAY
+  DINE_IN
 }
