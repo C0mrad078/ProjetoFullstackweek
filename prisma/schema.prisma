@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model restaurant {
+  id             String         @id @default(uuid()) //id do restaurante
+  nome           String //nome do restaurante
+  slug           String //slug do restaurante
+  description    String //descrição do restaurante
+  avatarImageurl String //imagem do restaurante
+  coverImageUrl  String //imagem de capa do restaurante
+  createdAt      DateTime       @default(now()) //data de criação (data atual) coleta a data de criação
+  updatedAt      DateTime       @updatedAt //data de atualização (data atual) coleta a data de atualização
+  categories     menuCategory[]
+  products       product[]
+}
+
+model menuCategory {
+  id           String     @id @default(uuid()) //id da categoria
+  name         String //nome da categoria
+  restaurantId String //id do restaurante
+  restaurant   restaurant @relation(fields: [restaurantId], references: [id]) //relacionamento com o restaurante
+  createdAt    DateTime   @default(now()) //data de criação (data atual) coleta a data de criação
+  updatedAt    DateTime   @updatedAt //data de atualização (data atual) coleta a data de atualização
+  products     product[] //relaciona com a tabela de produtos
+}
+
+model product {
+  id             String         @id @default(uuid()) //id do produto
+  name           String //nome do produto
+  description    String //descrição do produto
+  price          Float //preço do produto
+  ingredients    String //ingredientes do produto
+  imageUrl       String //imagem do produto
+  restaurant     restaurant     @relation(fields: [restaurantId], references: [id]) //relacionamento com o restaurante
+  restaurantId   String //id do restaurante (puxa o id do restaurante)
+  menuCategory   menuCategory   @relation(fields: [menuCategoryId], references: [id]) //relacionamento com a categoria
+  menuCategoryId String //id da categoria (puxa o id do menu)
+  createdAt      DateTime       @default(now()) //data de criação (data atual) coleta a data de criação
+  updatedAt      DateTime       @updatedAt //data de atualização (data atual) coleta a data de atualização
+  orderproduct   Orderproduct[] //relaciona com a tabela de produtos do pedido
+}
+
+model order {
+  id                Int            @id @default(autoincrement()) //id do pedido
+  total             Float //total do pedido
+  status            String //status do pedido
+  consunptionMethod String //método de consumo
+  createdAt         DateTime       @default(now()) //data de criação (data atual) coleta a data de criação
+  updatedAt         DateTime       @updatedAt //data de atualização (data atual) coleta a data de atualização
+  orderproduct      Orderproduct[] //relaciona com a tabela de produtos do pedido
+}
+
+model Orderproduct {
+  id        String   @id @default(uuid()) //id do produto do pedido
+  product   product  @relation(fields: [productId], references: [id]) //relacionamento com o produto
+  productId String //id do produto
+  order     order    @relation(fields: [orderId], references: [id]) //relacionamento com o pedido
+  orderId   Int //id do pedido
+  quantity  Int //quantidade
+  price     Float //preço
+  createdAt DateTime @default(now()) //data de criação (data atual) coleta a data de criação
+  updatedAt DateTime @updatedAt //data de atualização (data atual) coleta a data de atualização
+}
+
+enum OrderStatus {
+  PENDING //pendente
+  CONFIRMED //confirmado
+  IN_PROGRESS //em andamento
+  DONE //feito
+  CANCELED //cancelado
+}
+
+enum ConsumptionMethod {
+  takeout //levar
+  dine_in //comer no local
+}
